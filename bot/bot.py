@@ -1,20 +1,21 @@
 import threading
 import time
-import telebot
 import uuid 
 from pytubefix import YouTube
 from pathlib import Path
+import telebot
 import os
 import requests
 import json
 from dotenv import load_dotenv
+print('bot started')
 
 load_dotenv()
 
 token = os.getenv('TELEGRAM_TOKEN')
 developer_id = os.getenv('DEVELOPER_ID')
 SERVER_URL = os.getenv('SERVER_URL')
-TEMP_FOLDER = os.path.join(os.getcwd(), "temp")
+TEMP_FOLDER = os.path.join(os.getcwd(), "../temp")
 
 if not token or not SERVER_URL:
     raise ValueError("Не заданы обязательные переменные окружения: TELEGRAM_TOKEN, SERVER_URL")
@@ -122,4 +123,5 @@ def answer(m):
     if m.text == "Admin111" and developer_id:
         Bot.send_message(m.chat.id, text="ADMIN")
 
+print('bot started')
 Bot.polling()

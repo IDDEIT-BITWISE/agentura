@@ -4,7 +4,7 @@ import os
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Video Analyzer"
-    TEMP_DIR: Path = Path("temp")
+    TEMP_DIR: Path = Path("../temp")
     
     OPENAI_API_KEY: str
     OPENAI_MODEL: str = "gpt-3.5-turbo-1106"

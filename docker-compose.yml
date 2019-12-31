@@ -6,7 +6,10 @@ services:
       context: ./app
       dockerfile: Dockerfile
     volumes:
-      - ./app/temp:/temp
+      - temp:/temp
+
+    environment:
+      - WORK_DIR:/temp
     env_file:
       - .env
     restart: unless-stopped
@@ -16,7 +19,12 @@ services:
       context: ./bot
       dockerfile: Dockerfile
     volumes:
-      - ./app/temp:/temp
-    depends_on:
-      - app
+      - temp:/temp
+    env_file:
+      - .env
+    environment:
+      - WORK_DIR:/temps
     restart: unless-stopped
+
+volumes:
+  temp:
