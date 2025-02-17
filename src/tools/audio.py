@@ -2,6 +2,8 @@ import os
 
 from openai import OpenAI
 from pydantic import BaseModel
+from moviepy import VideoFileClip
+from src.langchain import State
 
 from dotenv import main
 main.load_dotenv()
@@ -18,3 +20,14 @@ def audio_to_text(audio_path):
         return transcription.text
     except Exception as e:
         return str(e)
+    
+def extract_audio_from_video(state: State):
+    try:
+        video = VideoFileClip(state.video_path)
+        audio = video.audio 
+        audio.write_audiofile('temp_audio.wav')
+        state.audio_path = os.path.abspath('temp_audio.wav')
+        return state 
+    except Exception as e:
+        return str(e)
+
