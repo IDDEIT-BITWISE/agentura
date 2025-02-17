@@ -1,9 +1,12 @@
+import sys 
+sys.path.append('..')
+
 import os
 
 from openai import OpenAI
 from pydantic import BaseModel
 from moviepy import VideoFileClip
-from src.langchain import State
+from src.states import SummarizeState
 
 from dotenv import main
 main.load_dotenv()
@@ -21,7 +24,7 @@ def audio_to_text(audio_path):
     except Exception as e:
         return str(e)
     
-def extract_audio_from_video(state: State):
+def extract_audio_from_video(state: SummarizeState):
     try:
         video = VideoFileClip(state.video_path)
         audio = video.audio 
@@ -31,7 +34,7 @@ def extract_audio_from_video(state: State):
     except Exception as e:
         return str(e)
     
-def transcribe_audio(state: State) -> State:
+def transcribe_audio(state: SummarizeState) -> SummarizeState:
     """Транскрибация аудио в текст"""
     if not state.audio_path:
         raise ValueError("Audio path not found in state")
@@ -44,3 +47,6 @@ def transcribe_audio(state: State) -> State:
     
     return state
 
+def extract_audio(state: SummarizeState):
+    audio_path = extract_audio_from_video(state["video_path"])
+    return {"audio_text": audio_to_text(audio_path), **state}

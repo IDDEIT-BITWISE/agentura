@@ -4,7 +4,7 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 
 from dotenv import main
-from src.langchain import State
+from states import SummarizeState
 
 main.load_dotenv()
 
@@ -32,7 +32,7 @@ def get_summary(prompt):
     
 
 
-def summarize_text(state: State) -> State:
+def summarize_text(state: SummarizeState) -> SummarizeState:
     """Суммаризация текста с GPT-4"""
     if not state.text:
         raise ValueError("Text not found in state")
@@ -54,3 +54,8 @@ def summarize_text(state: State) -> State:
 def is_russian(text: str) -> bool:
     """Определение языка текста"""
     return any('а' <= c <= 'я' for c in text.lower())
+
+
+def summarize_text(state: SummarizeState) -> SummarizeState:
+    summary = get_summary(state["audio_text"])
+    return {"summary":summary, **state}
