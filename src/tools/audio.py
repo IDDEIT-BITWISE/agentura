@@ -30,4 +30,17 @@ def extract_audio_from_video(state: State):
         return state 
     except Exception as e:
         return str(e)
+    
+def transcribe_audio(state: State) -> State:
+    """Транскрибация аудио в текст"""
+    if not state.audio_path:
+        raise ValueError("Audio path not found in state")
+    
+    transcription = audio_to_text(state.audio_path)
+    if isinstance(transcription, str):
+        state.text = transcription
+    else:
+        raise RuntimeError(f"Transcription failed: {transcription}")
+    
+    return state
 

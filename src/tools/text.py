@@ -29,3 +29,23 @@ def get_summary(prompt):
     except Exception as e:
         return str(e)
     
+
+
+def summarize_text(state: State) -> State:
+    """Суммаризация текста с GPT-4"""
+    if not state.text:
+        raise ValueError("Text not found in state")
+    
+    summary_prompt = f"""
+    Суммаризируй следующий текст. Сохрани ключевые моменты.
+    Язык итога: {'русский' if is_russian(state.text) else 'язык оригинала'}
+    Текст: {state.text}
+    """
+    
+    result = get_summary(summary_prompt)
+    if isinstance(result, tuple):
+        state.title, state.summary = result
+    else:
+        raise RuntimeError(f"Summarization failed: {result}")
+    
+    return state
