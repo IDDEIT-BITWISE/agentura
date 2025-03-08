@@ -11,17 +11,15 @@ class Transcriber:
 
     def transcribe(self, audio_path: str) -> str:
         try:
-            # Приведение пути к абсолютному
             abs_path = Path(audio_path).resolve()
             print(abs_path)
-            # Явное ожидание файла
             start_time = time.time()
             while not abs_path.exists():
                 if time.time() - start_time > 10:
                     raise FileNotFoundError(f"Файл {abs_path} не найден")
                 time.sleep(0.1)
 
-            # Проверка прав доступа
+            
             if not os.access(abs_path, os.R_OK):
                 raise PermissionError(f"Нет доступа к файлу {abs_path}")
 

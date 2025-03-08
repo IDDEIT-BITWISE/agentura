@@ -14,7 +14,6 @@ from core.config import settings
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Указываем правильный путь к шаблонам
 templates = Jinja2Templates(directory="../templates")
 
 # Метод GET для главной страницы
@@ -32,31 +31,26 @@ async def process_video(video_file: UploadFile = File(...)):
     audio_path = None
     
     try:
-        # Валидация файла
         if not video_file.content_type.startswith('video/'):
             raise HTTPException(
                 status_code=400,
                 detail="Неподдерживаемый формат файла"
             )
 
-        # Сохранение файла
         video_path = settings.TEMP_DIR / f"{uuid.uuid4()}.mp4"
         with open(video_path, "wb") as buffer:
             content = await video_file.read()
             buffer.write(content)
 
-        # Проверка размера файла
         if video_path.stat().st_size > 500 * 1024 * 1024:  # 500MB
             raise HTTPException(
                 status_code=413,
                 detail="Файл слишком большой (макс. 500MB)"
             )
 
-        # Обработка
         audio_path_str = extract_audio(str(video_path))
         audio_path = Path(audio_path_str)  # Преобразуем в Path
         
-        # Проверка существования файла
         if not audio_path.exists():
             raise HTTPException(
                 status_code=500,
@@ -87,7 +81,6 @@ async def process_video(video_file: UploadFile = File(...)):
         )
 
     finally:
-        # Очистка временных файлов
         if video_path and video_path.exists():
             os.unlink(video_path)
         if audio_path and audio_path.exists():
