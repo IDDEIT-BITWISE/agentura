@@ -3,16 +3,13 @@ from pathlib import Path
 import os
 
 class Settings(BaseSettings):
-    # Основные настройки
     PROJECT_NAME: str = "Video Analyzer"
     TEMP_DIR: Path = Path("temp")
     
-    # OpenAI настройки
     OPENAI_API_KEY: str
     OPENAI_MODEL: str = "gpt-3.5-turbo-1106"
     OPENAI_TEMPERATURE: float = 0.3
     
-    # Whisper настройки
     WHISPER_MODEL: str = "base"
 
     class Config:
