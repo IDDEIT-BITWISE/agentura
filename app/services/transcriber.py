@@ -12,7 +12,7 @@ class Transcriber:
     def transcribe(self, audio_path: str) -> str:
         try:
             abs_path = Path(audio_path).resolve()
-            print(abs_path)
+            print(f'audio created: {abs_path}')
             start_time = time.time()
             while not abs_path.exists():
                 if time.time() - start_time > 10:

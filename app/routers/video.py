@@ -49,7 +49,7 @@ async def process_video(video_file: UploadFile = File(...)):
             )
 
         audio_path_str = extract_audio(str(video_path))
-        audio_path = Path(audio_path_str)  # Преобразуем в Path
+        audio_path = Path(audio_path_str) 
         
         if not audio_path.exists():
             raise HTTPException(
@@ -57,11 +57,12 @@ async def process_video(video_file: UploadFile = File(...)):
                 detail="Не удалось создать аудиофайл"
             )
 
-        transcript = Transcriber().transcribe(str(audio_path))  # Передаем строку
-        summary = Summarizer().summarize(transcript)
+        transcript = Transcriber().transcribe(str(audio_path)) 
+        summary = Summarizer().summarize(text=transcript)
 
         return JSONResponse({
             "status": "success",
+            "full_text":transcript, 
             "summary": summary,
             "filename": video_file.filename
         })

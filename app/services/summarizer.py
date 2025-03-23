@@ -10,8 +10,8 @@ class Summarizer:
             model=settings.OPENAI_MODEL
         )
         self.prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are a professional summarizer. Create concise Russian summary."),
-            ("human", "Summarize this text:\n\n{text}")
+            ("system", "Ты профессионал по извлечению выжимок. Твоя задача -- сделать краткий пересказ текста. Учти, что ты сокращаешь не просто текст, а аудио, извлеченное из видеофайла Отвечай на русском языке"),
+            ("human", "Дай краткую выжимку тексту:\n\n{text}")
         ])
 
     def summarize(self, text: str) -> str:
