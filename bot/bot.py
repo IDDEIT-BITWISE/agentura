@@ -3,9 +3,30 @@ from telebot import types
 import uuid 
 from pytubefix import YouTube
 import os
+import requests
 
 token = '6618739641:AAHvHVK0AnOnE90xn3G6TBw8jstGw0VbE9M'
 developer_id = '446597696'
+SERVER_URL = 'https://your-server.com/api/endpoint'
+
+def send_to_server(chat_id, filename):
+    try:
+        response = requests.post(
+            SERVER_URL,
+            json={
+                'chat_id': chat_id,
+                'filename': filename
+            },
+            timeout=10  
+        )
+        
+        if response.status_code == 200:
+            return response.json()
+        return None
+        
+    except Exception as e:
+        print(f"Ошибка при отправке на сервер: {e}")
+        return None
 
 
 def start_keyboard():   
@@ -48,7 +69,15 @@ def handle_link(message):
 
         audio_stream.download(output_path=download_folder, filename=file)
 
-        Bot.send_message(message.chat.id, file)
+        server_response = send_to_server(message.chat.id, file)
+        
+        if server_response and server_response.get('status') == 'success':
+            Bot.reply_to(message, "✅ Файл успешно обработан сервером")
+            Bot.send_message(message.chat.id, server_response)
+        else:
+            Bot.reply_to(message, "❌ Ошибка обработки на сервере")
+        
+        
         
         # with open(file, 'rb') as video_file:
         #     Bot.send_video(message.chat.id, video_file)
