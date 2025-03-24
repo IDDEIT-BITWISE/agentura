@@ -3,11 +3,16 @@ import whisper
 import os
 from pathlib import Path
 import time
-from core.config import settings
+from core.config import Settings
+import torch
+
+settings = Settings()
+settings.TEMP_DIR.mkdir(exist_ok=True)
 
 class Transcriber:
     def __init__(self):
-        self.model = whisper.load_model(settings.WHISPER_MODEL)
+        print(torch.cuda.is_available()) 
+        self.model = whisper.load_model(settings.WHISPER_MODEL, device='cuda:0')
 
     def transcribe(self, audio_path: str) -> str:
         try:
