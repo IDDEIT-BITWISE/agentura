@@ -1,5 +1,6 @@
+import threading
+import time
 import telebot
-from telebot import types
 import uuid 
 from pytubefix import YouTube
 from pathlib import Path
@@ -7,15 +8,20 @@ import os
 import requests
 import json
 
-token = '6618739641:AAHvHVK0AnOnE90xn3G6TBw8jstGw0VbE9M'
+
+token = '7774412256:AAHJ7GKbG5sHtS_aU8J-Pdpwl7DAX_WInQA'
 developer_id = '446597696'
 SERVER_URL = 'http://127.0.0.1:8000/processFilename'
+hello_msg = """*Привет\! 👋 Я бот\-транскрибатор и умею:*
 
+✅ Создавать краткие выводы из видео на YouTube и аудиозаписей
+
+❗️ Если что\-то пошло не так, пиши: @Pierre\_Morrel
+
+Бот разработан командой ИРЦЭИТ \(https://www\.iddeit\.ru/\#/projects/transcriber\)"""
 
 
 def send_to_server(chat_id, filename):
-    print("PIZDAAAAAAAA")
-    print(filename)
     try:
         response = requests.post(
             SERVER_URL,
@@ -33,77 +39,81 @@ def send_to_server(chat_id, filename):
         print(f"Ошибка при отправке на сервер: {e}")
         return None
 
+def show_typing_indicator(chat_id, duration):
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        Bot.send_chat_action(chat_id, 'typing')
+        time.sleep(1)
 
-def start_keyboard():   
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    b1 = types.KeyboardButton(text="Оставить заявку")
-    b2 = types.KeyboardButton(text="Заполнить карточку участника")
-    keyboard.add(b1, b2)
-    
-    return keyboard
 
-def again_keyboard():
-    keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-    b1 = types.KeyboardButton(text="Начать заново")
-    keyboard.add(b1)
-    
-    return keyboard
-
-        
 Bot = telebot.TeleBot(token, parse_mode = None)
 
 @Bot.message_handler(commands=["start"])
 def start(m, res=False):
-    Bot.send_message(m.chat.id, text="Привет! Отправь ссылку на видео!")
+    Bot.send_message(m.chat.id, hello_msg, parse_mode='MarkdownV2')
+    Bot.send_message(m.chat.id, "Жду ссылку на видео 😊")
     Bot.register_next_step_handler(m, handle_link)
+    
     
 def handle_link(message):
     url = message.text
+    status_msg = Bot.send_message(message.chat.id, "📥 Скачиваю видео с YouTube...")
     try:
         download_folder = "../app/temp"
         
         unique_id = uuid.uuid4().hex
         file = f"output_{unique_id}.mp4"
         
-
-
         yt = YouTube(url)
-        #audio_stream = yt.streams.filter(only_audio=True).order_by('abr').desc().first()
-        audio_stream = yt.streams.first()
+        stream = yt.streams.first()
+        
+        Bot.edit_message_text(
+            f"📥 Скачиваю: {yt.title[:50]}...\n"
+            f"📦 Размер: {round(stream.filesize / (1024*1024), 2)} MB",
+            message.chat.id,
+            status_msg.message_id
+        )
 
-        # if not audio_stream:
-        #     Bot.reply_to(message, "❌ Не удалось найти аудиопоток.")
-        #     return
-
-        audio_stream.download(output_path=download_folder, filename=file)
-
+        stream.download(output_path=download_folder, filename=file)
 
         file_path = str(Path(os.path.join(download_folder, file)).resolve())
 
-        # with open(file_path, 'rb') as video_file:
-        #     Bot.send_video(message.chat.id, video_file)
-
+        Bot.edit_message_text(
+            "✅ Видео успешно скачано!\n"
+            "⚙️ Отправляю на обработку...",
+            message.chat.id,
+            status_msg.message_id
+        )
         
+        typing_thread = threading.Thread(
+            target=show_typing_indicator, 
+            args=(message.chat.id, 15)
+        )
+        
+        typing_thread.start()
+
         server_response = send_to_server(message.chat.id, file)
+        
+        typing_thread.join()
+        
         print(file_path)        
         if server_response and server_response.get('status') == 'success':
-            Bot.reply_to(message, "✅ Файл успешно обработан сервером")
+            Bot.edit_message_text(
+                "✅ Файл успешно обработан сервером",
+                message.chat.id,
+                status_msg.message_id
+            )
             Bot.send_message(message.chat.id, "Расшифровка видео: \n" + server_response["full_text"])
             Bot.send_message(message.chat.id, "Суммаризация: \n" + server_response["summary"])
+            
         else:
-            Bot.reply_to(message, "❌ Ошибка обработки на сервере")
-        
-        
-        
-        
-            
-            # if os.path.exists(file):
-            #     os.remove(file)
-            
-        
-            
+            Bot.reply_to(message, "❌ Ошибка обработки на сервере \n Пожалуйста, напишите @Pierre_Morrel 📩")
+            Bot.delete_message(message.chat.id, status_msg.message_id)
+                     
     except Exception as e:
-        Bot.reply_to(message, f"❌ Ошибка: {str(e)}")
+        Bot.reply_to(message, f"❌ Ошибка: {str(e)} \n Пожалуйста, напишите @Pierre_Morrel 📩")
+        Bot.delete_message(message.chat.id, status_msg.message_id)
+
         
 @Bot.message_handler(content_types=['text'])
 def answer(m):
