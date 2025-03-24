@@ -1,4 +1,3 @@
-# services/transcriber.py
 import whisper
 import os
 from pathlib import Path
@@ -11,8 +10,9 @@ settings.TEMP_DIR.mkdir(exist_ok=True)
 
 class Transcriber:
     def __init__(self):
-        print(torch.cuda.is_available()) 
-        self.model = whisper.load_model(settings.WHISPER_MODEL, device='cuda:0')
+        self.device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+        self.model = whisper.load_model(settings.WHISPER_MODEL, device=self.device)
+        print(f'Using device: {self.device}')
 
     def transcribe(self, audio_path: str) -> str:
         try:

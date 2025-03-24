@@ -12,14 +12,17 @@ import json
 token = '7774412256:AAHJ7GKbG5sHtS_aU8J-Pdpwl7DAX_WInQA'
 developer_id = '446597696'
 SERVER_URL = 'http://127.0.0.1:8000/processFilename'
-hello_msg = """*Привет\! 👋 Я бот\-транскрибатор и умею:*
+hello_msg = """*Привет\! 👋 
+Я бот\-транскрибатор и умею:*
 
-✅ Создавать краткие выводы из видео на YouTube и аудиозаписей
+✅ Создавать краткие выводы из YouTube видео
 
 ❗️ Если что\-то пошло не так, пиши: @Pierre\_Morrel
 
-Бот разработан командой ИРЦЭИТ \(https://www\.iddeit\.ru/\#/projects/transcriber\)"""
+Бот разработан командой [ИРЦЭИТ](https://www\.iddeit\.ru/\#/projects/transcriber)"""
 
+
+TEMP_FOLDER = os.path.join(os.path.dirname(__file__), "..", "app", "temp") 
 
 def send_to_server(chat_id, filename):
     try:
@@ -54,12 +57,11 @@ def start(m, res=False):
     Bot.send_message(m.chat.id, "Жду ссылку на видео 😊")
     Bot.register_next_step_handler(m, handle_link)
     
-    
 def handle_link(message):
     url = message.text
     status_msg = Bot.send_message(message.chat.id, "📥 Скачиваю видео с YouTube...")
     try:
-        download_folder = "../app/temp"
+        download_folder = TEMP_FOLDER
         
         unique_id = uuid.uuid4().hex
         file = f"output_{unique_id}.mp4"
@@ -80,7 +82,7 @@ def handle_link(message):
 
         Bot.edit_message_text(
             "✅ Видео успешно скачано!\n"
-            "⚙️ Отправляю на обработку...",
+            "⚙️ Обрабатывается...",
             message.chat.id,
             status_msg.message_id
         )
@@ -103,7 +105,14 @@ def handle_link(message):
                 message.chat.id,
                 status_msg.message_id
             )
-            Bot.send_message(message.chat.id, "Расшифровка видео: \n" + server_response["full_text"])
+            transcribation_path = os.path.join(TEMP_FOLDER, f"transcribation_{unique_id}.txt")
+            
+            with open(transcribation_path, 'w', encoding='utf-8') as f:
+                f.write(server_response["full_text"])
+            
+            with open(transcribation_path, 'rb') as doc:
+                Bot.send_document(message.chat.id, doc, caption='Расшифровка видео')
+
             Bot.send_message(message.chat.id, "Суммаризация: \n" + server_response["summary"])
             
         else:
@@ -113,6 +122,10 @@ def handle_link(message):
     except Exception as e:
         Bot.reply_to(message, f"❌ Ошибка: {str(e)} \n Пожалуйста, напишите @Pierre_Morrel 📩")
         Bot.delete_message(message.chat.id, status_msg.message_id)
+    
+    finally:
+        Bot.send_message(message.chat.id, "Жду ссылку на следующее видео 😉")
+        Bot.register_next_step_handler(message, handle_link)
 
         
 @Bot.message_handler(content_types=['text'])

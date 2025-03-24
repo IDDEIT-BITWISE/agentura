@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-3.5-turbo-1106"
     OPENAI_TEMPERATURE: float = 0.3
     
-    WHISPER_MODEL: str = "tiny"
+    WHISPER_MODEL: str = "base"
 
     class Config:
         env_file = ".env"
