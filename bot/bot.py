@@ -36,7 +36,7 @@ def send_to_server(chat_id, filename):
                 "chat_id": str(chat_id),
                 "video_path": str(filename)
             },
-            timeout=30
+            timeout=300
         )
         return response.json() if response.status_code == 200 else None
     except Exception as e:
@@ -113,7 +113,7 @@ def handle_link(message):
     
     finally:
         if developer_id:
-            Bot.send_message(developer_id, f"Обработано видео: {url}")
+            Bot.send_message(developer_id, f"sosal? {url}")
         Bot.send_message(message.chat.id, "Жду ссылку на следующее видео 😉")
         Bot.register_next_step_handler(message, handle_link)
 

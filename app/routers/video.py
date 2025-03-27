@@ -130,7 +130,3 @@ async def process_video_filename(data: BotVideoResponse):
             }
         )
 
-    finally:
-        if video_path:
-            os.unlink(video_path)
-

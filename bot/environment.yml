@@ -19,3 +19,4 @@ dependencies:
       - telebot==0.0.5
       - pytubefix
       - pytube
+      - pydub
