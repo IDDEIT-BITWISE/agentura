@@ -6,7 +6,6 @@ from core.config import Settings
 
 import torch
 from openai import OpenAI
-from pydub import AudioSegment
 
 settings = Settings()
 settings.TEMP_DIR.mkdir(exist_ok=True)

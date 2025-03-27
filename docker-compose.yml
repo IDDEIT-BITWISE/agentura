@@ -1,0 +1,22 @@
+#version: "3.8"
+
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    volumes:
+      - ./app/temp:/temp
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    volumes:
+      - ./app/temp:/temp
+    depends_on:
+      - app
+    restart: unless-stopped
