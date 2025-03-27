@@ -7,11 +7,18 @@ from pathlib import Path
 import os
 import requests
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 
-token = '7774412256:AAHJ7GKbG5sHtS_aU8J-Pdpwl7DAX_WInQA'
-developer_id = '446597696'
-SERVER_URL = 'http://127.0.0.1:8000/processFilename'
+token = os.getenv('TELEGRAM_TOKEN')
+developer_id = os.getenv('DEVELOPER_ID')
+SERVER_URL = os.getenv('SERVER_URL')
+TEMP_FOLDER = os.path.join(os.getcwd(), "temp")
+
+if not token or not SERVER_URL:
+    raise ValueError("Не заданы обязательные переменные окружения: TELEGRAM_TOKEN, SERVER_URL")
+
 hello_msg = """*Привет\! 👋 
 Я бот\-транскрибатор и умею:*
 
@@ -21,23 +28,17 @@ hello_msg = """*Привет\! 👋
 
 Бот разработан командой [ИРЦЭИТ](https://www\.iddeit\.ru/\#/projects/transcriber)"""
 
-
-TEMP_FOLDER = os.path.join(os.path.dirname(__file__), "..", "app", "temp") 
-
 def send_to_server(chat_id, filename):
     try:
         response = requests.post(
             SERVER_URL,
-            data=json.dumps({
+            json={
                 "chat_id": str(chat_id),
                 "video_path": str(filename)
-            })
+            },
+            timeout=30
         )
-        
-        if response.status_code == 200:
-            return response.json()
-        return None
-        
+        return response.json() if response.status_code == 200 else None
     except Exception as e:
         print(f"Ошибка при отправке на сервер: {e}")
         return None
@@ -48,8 +49,7 @@ def show_typing_indicator(chat_id, duration):
         Bot.send_chat_action(chat_id, 'typing')
         time.sleep(1)
 
-
-Bot = telebot.TeleBot(token, parse_mode = None)
+Bot = telebot.TeleBot(token, parse_mode=None)
 
 @Bot.message_handler(commands=["start"])
 def start(m, res=False):
@@ -60,9 +60,9 @@ def start(m, res=False):
 def handle_link(message):
     url = message.text
     status_msg = Bot.send_message(message.chat.id, "📥 Скачиваю видео с YouTube...")
+    
     try:
-        download_folder = TEMP_FOLDER
-        
+        os.makedirs(TEMP_FOLDER, exist_ok=True)
         unique_id = uuid.uuid4().hex
         file = f"output_{unique_id}.mp4"
         
@@ -76,13 +76,11 @@ def handle_link(message):
             status_msg.message_id
         )
 
-        stream.download(output_path=download_folder, filename=file)
-
-        file_path = str(Path(os.path.join(download_folder, file)).resolve())
+        stream.download(output_path=TEMP_FOLDER, filename=file)
+        file_path = os.path.join(TEMP_FOLDER, file)
 
         Bot.edit_message_text(
-            "✅ Видео успешно скачано!\n"
-            "⚙️ Обрабатывается...",
+            "✅ Видео успешно скачано!\n⚙️ Обрабатывается...",
             message.chat.id,
             status_msg.message_id
         )
@@ -91,20 +89,12 @@ def handle_link(message):
             target=show_typing_indicator, 
             args=(message.chat.id, 15)
         )
-        
         typing_thread.start()
 
         server_response = send_to_server(message.chat.id, file_path)
-        
         typing_thread.join()
         
-        print(file_path)        
         if server_response and server_response.get('status') == 'success':
-            Bot.edit_message_text(
-                "✅ Файл успешно обработан сервером",
-                message.chat.id,
-                status_msg.message_id
-            )
             transcribation_path = os.path.join(TEMP_FOLDER, f"transcribation_{unique_id}.txt")
             
             with open(transcribation_path, 'w', encoding='utf-8') as f:
@@ -114,23 +104,22 @@ def handle_link(message):
                 Bot.send_document(message.chat.id, doc, caption='Расшифровка видео')
 
             Bot.send_message(message.chat.id, "Суммаризация: \n" + server_response["summary"])
-            
         else:
-            Bot.reply_to(message, "❌ Ошибка обработки на сервере \n Пожалуйста, напишите @Pierre_Morrel 📩")
-            Bot.delete_message(message.chat.id, status_msg.message_id)
+            raise Exception("Ошибка обработки на сервере")
                      
     except Exception as e:
-        Bot.reply_to(message, f"❌ Ошибка: {str(e)} \n Пожалуйста, напишите @Pierre_Morrel 📩")
+        Bot.reply_to(message, f"❌ Ошибка: {str(e)} \nПожалуйста, напишите @Pierre_Morrel 📩")
         Bot.delete_message(message.chat.id, status_msg.message_id)
     
     finally:
+        if developer_id:
+            Bot.send_message(developer_id, f"Обработано видео: {url}")
         Bot.send_message(message.chat.id, "Жду ссылку на следующее видео 😉")
         Bot.register_next_step_handler(message, handle_link)
 
-        
 @Bot.message_handler(content_types=['text'])
 def answer(m):
-    if m.text == "Admin111":
+    if m.text == "Admin111" and developer_id:
         Bot.send_message(m.chat.id, text="ADMIN")
 
 Bot.polling()
