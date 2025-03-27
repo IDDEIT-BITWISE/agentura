@@ -92,9 +92,8 @@ async def process_video(video_file: UploadFile = File(...)):
 
 @router.post("/processFilename")
 async def process_video_filename(data: BotVideoResponse):
-    print('pizda')
     chat_id = data.chat_id
-    video_path = "C:/Users/Andrey/agentura/app/temp/"+data.video_path
+    video_path = data.video_path
 
     print(video_path, chat_id)
     

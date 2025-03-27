@@ -94,7 +94,7 @@ def handle_link(message):
         
         typing_thread.start()
 
-        server_response = send_to_server(message.chat.id, file)
+        server_response = send_to_server(message.chat.id, file_path)
         
         typing_thread.join()
         
