@@ -1,0 +1,7 @@
+telebot==0.0.5
+pytube==15.0.0
+telebot==0.0.5
+pytubefix==8.12.2
+pydub==0.25.1
+requests==2.31.0
+python-dotenv

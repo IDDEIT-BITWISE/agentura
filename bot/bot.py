@@ -15,7 +15,7 @@ load_dotenv()
 token = os.getenv('TELEGRAM_TOKEN')
 developer_id = os.getenv('DEVELOPER_ID')
 SERVER_URL = os.getenv('SERVER_URL')
-TEMP_FOLDER = os.path.join(os.getcwd(), "../temp")
+TEMP_FOLDER = Path("/app/temp")
 
 if not token or not SERVER_URL:
     raise ValueError("Не заданы обязательные переменные окружения: TELEGRAM_TOKEN, SERVER_URL")

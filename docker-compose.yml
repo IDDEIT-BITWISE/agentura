@@ -6,25 +6,35 @@ services:
       context: ./app
       dockerfile: Dockerfile
     volumes:
-      - temp:/temp
+      - temp:/app/temp
 
     environment:
       - WORK_DIR:/temp
     env_file:
       - .env
     restart: unless-stopped
+    networks:
+      - agentura-network
+    ports:
+      - "8000:8000"
 
   bot:
     build:
       context: ./bot
       dockerfile: Dockerfile
     volumes:
-      - temp:/temp
+      - temp:/app/temp
     env_file:
       - .env
     environment:
-      - WORK_DIR:/temps
+      - WORK_DIR:/temp
     restart: unless-stopped
+    networks:
+      - agentura-network
 
 volumes:
   temp:
+
+networks:
+  agentura-network:
+    driver: bridge
